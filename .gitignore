@@ -1,0 +1,4 @@
+#Things to ignore
+
+*.pyc
+keys.py
