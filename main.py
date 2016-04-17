@@ -13,13 +13,13 @@ auth.set_access_token(keys.keys['access_token'], keys.keys['access_token_secret'
 
 #Connect to API
 api = tweepy.API(auth)
-total_rows = 0
 
 def build_file(since):
+    total_rows = 0
+    
     #Get recent tweets from dril and add to new file
     for status in tweepy.Cursor(api.user_timeline, 'dril', since_id=since).items():
-        _process_status(status)
-        total_rows += 1
+        total_rows += _process_status(status)
         
     #Put content of old file in new file
     #This is kind of messy uhhh
@@ -39,6 +39,8 @@ def build_file(since):
         
     #Rename the new file to be the old file
     os.rename('data/new.csv', 'data/dril.csv')
+    
+    return total_rows
 
 def _process_status(status):
     try:
@@ -49,10 +51,14 @@ def _process_status(status):
             bad = len(status.entities['urls']) > 0 or len(status.entities['user_mentions']) > 0 or 'media' in status.entities or 'extended_entities' in status.entities
             if not bad:
                 write.writerow([status.id, status.text.encode('ascii', 'ignore')])
+            else:
+                return 0
                 
             writeFile.close()
     except IOError: 
         print('Failed to open file (2)')
+        
+    return 1
 
 def get_since_id():
     newest = None
@@ -70,5 +76,7 @@ def get_since_id():
     
 #Run it     
 since = get_since_id()
-build_file(since)
+#Make sure to build the file after not having made any requests for a while. Otherwise,
+#a "too many requests" error may occur.
+total_rows = build_file(since)
 print(total_rows)
