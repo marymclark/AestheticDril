@@ -1,82 +1,27 @@
-#Main file
-from csv import reader, writer, QUOTE_NONNUMERIC
-import os, sys
-import tweepy
-import keys
-import urllib3.contrib.pyopenssl
+import unsplash
+import dril
+from PIL import Image, ImageDraw, ImageFont
 
-#Switch SSL to PyOpenSSL
-urllib3.contrib.pyopenssl.inject_into_urllib3()
+#Pick a new random image and load it
+unsplash.getImage()
+image = Image.open('data/background.jpg')
 
-auth = tweepy.OAuthHandler(keys.keys['consumer_key'], keys.keys['consumer_secret'])
-auth.set_access_token(keys.keys['access_token'], keys.keys['access_token_secret'])
+#Build the file and get a random quote
+d = dril.Dril()
+d.build() 
+quote = d.quote()
+print('"' + quote[1] + '" - @dril')
 
-#Connect to API
-api = tweepy.API(auth)
+#Resize and crop the image?
+p = 800/image.width
+image = image.resize([int(image.width*p), int(image.height*p)])
 
-def build_file(since):
-    total_rows = 0
-    
-    #Get recent tweets from dril and add to new file
-    for status in tweepy.Cursor(api.user_timeline, 'dril', since_id=since).items():
-        total_rows += _process_status(status)
-        
-    #Put content of old file in new file
-    #This is kind of messy uhhh
-    try:
-        #Open things for reading and writing
-        readFile = open('data/dril.csv', 'rb')
-        writeFile = open('data/new.csv', 'ab')
-        
-        read = reader(readFile)
-        write = writer(writeFile, delimiter=',', quoting=QUOTE_NONNUMERIC) #Uhhhhmmmmmhmh mmmm
-        
-        for row in read:
-            write.writerow([int(row[0]), row[1]])
-            total_rows += 1
-    except IOError:
-        print('Failed to open file (1) [okay if this is the first time running]')
-        
-    #Rename the new file to be the old file
-    os.rename('data/new.csv', 'data/dril.csv')
-    
-    return total_rows
+#Testing with default font
+draw = ImageDraw.Draw(image)
+font = ImageFont.load_default()
 
-def _process_status(status):
-    try:
-        with open('data/new.csv', 'ab') as writeFile:
-            write = writer(writeFile, delimiter=',', quoting=QUOTE_NONNUMERIC)
-            
-            #Check to make sure it has just text content
-            bad = len(status.entities['urls']) > 0 or len(status.entities['user_mentions']) > 0 or 'media' in status.entities or 'extended_entities' in status.entities
-            if not bad:
-                write.writerow([status.id, status.text.encode('ascii', 'ignore')])
-            else:
-                return 0
-                
-            writeFile.close()
-    except IOError: 
-        print('Failed to open file (2)')
-        
-    return 1
+draw.text((10, 10), quote[1], font=font)
+image.show()
 
-def get_since_id():
-    newest = None
-    try:
-        with open('data/dril.csv', 'rb') as readFile:
-            read = reader(readFile, delimiter=',')
-            firstRow = next(read)
-            newest = firstRow[0]
-            readFile.close()
-    except IOError:
-        #Return newest as None to grab everything (even though this really isn't ideal aaaaaaahhh)
-        print('Failed to open file (3) [okay if this is the first time running]')
-        
-    return newest 
-    
-#Run it     
-since = get_since_id()
-#Make sure to build the file after not having made any requests for a while. Otherwise,
-#a "too many requests" error may occur.
-total_rows = build_file(since)
-print(total_rows)
+#Save image
+image.save('background.jpg', "JPEG")
