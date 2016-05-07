@@ -7,6 +7,7 @@ import dril
 import keys
 from html import unescape
 #from re import findall, compile
+import logging
 import tweepy
 from PIL import Image, ImageDraw, ImageFont, ImageEnhance, ImageStat
 from random import randrange
@@ -136,7 +137,7 @@ def create_image():
     d = dril.Dril()
     d.build() 
     quote = d.quote()[1]
-    print('"' + quote + '" - @dril')
+    #print('"' + quote + '" - @dril')
     
     #Resize image to have 800px width and adjust brightness
     p = 800/image.width
@@ -168,6 +169,9 @@ def create_image():
     image.save('data/dril.png', "PNG")
     
 if __name__ == "__main__":
+    logging.basicConfig(filename='data/info.log', level=logging.INFO, format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+    logging.info('Began running script...')
+    
     #Create image
     create_image()
     
@@ -177,6 +181,8 @@ if __name__ == "__main__":
     api = tweepy.API(auth)
     
     #Update
-    status = api.update_with_media('data/driil.png')
-    print(status)
-    
+    try:
+        api.update_with_media('data/dril.png')
+        logging.info('Updated successfully')
+    except Exception:
+        logging.info('Update failed: ' + str(Exception))
