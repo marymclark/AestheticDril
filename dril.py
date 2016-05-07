@@ -1,11 +1,13 @@
+#!/usr/bin/env python
+
 #Script to build a file of dril's tweets
 #Also gets a random dril quote
 
+import keys
 from csv import reader, writer, QUOTE_NONNUMERIC
 from random import randrange
 import os, sys
 import tweepy
-import keys
 #import urllib3.contrib.pyopenssl
 
 #Switch SSL to PyOpenSSL (IN PYTHON 2 switched to python 3 bc it's just better)
@@ -105,3 +107,9 @@ class Dril:
             print('Failed to open file')
             
         return line_indexed
+        
+#Testing module
+if __name__ == "__main__":
+    d = Dril()
+    d.build()
+    print('"' + d.quote()[1] + '" - @dril')
