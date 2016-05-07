@@ -4,21 +4,24 @@
 
 import unsplash
 import dril
+import keys
 from html import unescape
-from re import findall, compile
+#from re import findall, compile
+import tweepy
 from PIL import Image, ImageDraw, ImageFont, ImageEnhance, ImageStat
 from random import randrange
 
 #Function to format quotes
 def format_quote(quote):
-    pattern = compile('[.?,!"#()*]+')
-    breaks = pattern.findall(quote)
+    #pattern = compile('[.?,!"#()*]+')
+    #breaks = pattern.findall(quote)
     
     newSegment = ''
     segments = []
     important = ['"','*','(',')','[',']']
     
     for item in quote.split():
+        item = unescape(item)
         
         if '"' in item or '*' in item or '(' in item or ')' in item:
             #Count occurrences in item
@@ -58,7 +61,7 @@ def format_quote(quote):
             newSegment += item + ' '
             
         #Break up segments that are getting too long
-        if len(newSegment) > 70 and '"' not in newSegment and '*' not in newSegment and '(' not in newSegment:
+        if len(newSegment) > 70: #and '"' not in newSegment and '*' not in newSegment and '(' not in newSegment:
             end = newSegment.find(' ', round(len(newSegment)/2))
             segments.append(newSegment[0:end])
             newSegment = newSegment[end:]
@@ -68,7 +71,7 @@ def format_quote(quote):
         segments.append(newSegment)
     
     #Strip whitespace
-    segments = unescape([s.strip(' ') for s in segments])
+    segments = [s.strip(' ') for s in segments]
     
     return segments
     
@@ -98,41 +101,33 @@ def beautify_quote(segments):
     #Pick the nice and regular font from the arrays
     fontPair = fontPairs[randrange(len(fontPairs))] 
     
-    #=====================================================
     organized = []
-    """
-    count = 0
+    nothingFancy = True
     for segment in segments:
-        if ':' in segment: count+=1
-    
-    #If it's a conversation ==============================
-    if count > 1:
-        for segment in segments:
-            temp = {'font': None, 'size': None, 'text': segment}
-            temp['font'] = fontPair[1]
-            temp['size'] = 25
-            organized.append(temp)
- 
-    else:
-    """
+        if '#' in segment or '"' in segment:
+            nothingFancy = False
+
     for segment in segments:
         temp = {'font': None, 'size': None, 'text': segment}
         
         #If it's small or in quotes or a hashtag, give it a nice font
         if '#' in segment or '"' in segment: #or len(segment) < 15 
             temp['font'] = fontPair[0]
-            temp['size'] = 45
-        
+            temp['size'] = 50
+        #If nothing else is going to be in a nice font, put small text in a nice font...?
+        elif nothingFancy and len(segment) < 15:
+            temp['font'] = fontPair[0]
+            temp['size'] = 50
         #Otherwise
         else:
             temp['font'] = fontPair[1]
-            temp['size'] = 15
+            temp['size'] = 20
         
         organized.append(temp)   
       
     return organized
 
-if __name__ == "__main__":
+def create_image():
     #Pick a new random image and load it
     unsplash.getImage('data/dril.png')
     image = Image.open('data/dril.png')
@@ -155,9 +150,12 @@ if __name__ == "__main__":
     imageText = beautify_quote(segments) #{'width': image.width, 'height': image.height}
     
     #Calculate stuff for printing
-    maxHeight = 0
-    for i in imageText: maxHeight += i['size']
-    baseHeight = image.height/3
+    tempHeight = 0
+    for segment in imageText:
+        font = ImageFont.truetype(font='fonts/'+segment['font']+'.ttf', size=segment['size'])
+        height = font.getsize(segment['text'])[1]
+        tempHeight += height
+    baseHeight = (image.height - tempHeight)/2
     
     #Write everything to the image
     for segment in imageText:
@@ -168,3 +166,17 @@ if __name__ == "__main__":
 
     #Save image
     image.save('data/dril.png', "PNG")
+    
+if __name__ == "__main__":
+    #Create image
+    create_image()
+    
+    #Authenticate
+    auth = tweepy.OAuthHandler(keys.keys['consumer_key'], keys.keys['consumer_secret'])
+    auth.set_access_token(keys.keys['access_token'], keys.keys['access_token_secret'])
+    api = tweepy.API(auth)
+    
+    #Update
+    status = api.update_with_media('data/driil.png')
+    print(status)
+    
