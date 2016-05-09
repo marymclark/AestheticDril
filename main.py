@@ -25,6 +25,12 @@ def format_quote(quote):
         item = unescape(item)
         
         if '"' in item or '*' in item or '(' in item or ')' in item:
+            """
+            #Maybe add this?
+            if len(item) <= 1:
+                segments[len(segments-1)] += item
+            """
+                
             #Count occurrences in item
             count = 0
             for letter in item:
@@ -53,10 +59,14 @@ def format_quote(quote):
             segments.append(item)
             newSegment = ''
             
-        elif '.' in item or '!' in item or ',' in item or '?' in item or '\n' in item:
-            newSegment += item
-            segments.append(newSegment)
-            newSegment = ''
+        #Trying to figure out how to get the returns in the csv? :/
+        elif '.' in item or '!' in item or ',' in item or '?' in item or '\n' in item or '\r' in item:
+            if len(item) <= 1:
+                segments[len(segments)-1] += ' ' + item
+            else:
+                newSegment += item
+                segments.append(newSegment)
+                newSegment = ''
         
         else:
             newSegment += item + ' '
@@ -103,7 +113,7 @@ def beautify_quote(segments):
     fontPairs = [
         ['Debby', 'DroidSerif-Italic'],
         ['Debby', 'DroidSerif-Regular'],
-        #['Kankin', 'DroidSerif-Regular']
+        ['Lovelo Line Light', 'sf-new-republic.sc'],
     ]
     
     #Pick the nice and regular font from the arrays
@@ -164,25 +174,24 @@ def create_image(quote, path):
         font = ImageFont.truetype(font='fonts/'+segment['font']+'.ttf', size=segment['size'])
         width,height = font.getsize(segment['text'])
         draw.text(((image.width-width)/2, baseHeight), segment['text'], font=font)
-        baseHeight += height
+        baseHeight += height+2
 
     #Save image
     image.save('data/dril.png', "PNG")
     
 if __name__ == "__main__":
-    #logging.basicConfig(filename='data/info.log', level=logging.INFO, format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
-    #logging.info('Began running script...')
+    logging.basicConfig(filename='data/info.log', level=logging.INFO, format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+    logging.info('Began running script...')
     
     #Build the file and get a random quote
     d = dril.Dril()
     d.build() 
     quote = d.quote()[1]
-    #print('"' + quote + '" - @dril')
+    print('"' + quote + '" - @dril')
     
     #Create image
     create_image(quote, 'data/dril.png')
-    
-    """
+
     #Authenticate
     auth = tweepy.OAuthHandler(keys.keys['consumer_key'], keys.keys['consumer_secret'])
     auth.set_access_token(keys.keys['access_token'], keys.keys['access_token_secret'])
@@ -194,4 +203,3 @@ if __name__ == "__main__":
         logging.info('Updated successfully')
     except Exception:
         logging.info('Update failed: ' + str(Exception))
-    """
