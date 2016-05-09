@@ -83,9 +83,16 @@ def adjust_brightness(image):
     stat = ImageStat.Stat(temp)
     brightness = (stat.mean[0]/255)
     
+    #Think this makes more sense
+    enhancer = ImageEnhance.Brightness(image)
+    if brightness > 0.10:
+        image = enhancer.enhance(1.10-brightness)
+    """
     if brightness > 0.35:
-        enhancer = ImageEnhance.Brightness(image)
         image = enhancer.enhance(0.75)
+    elif brightness > 0.60:
+        image = enhancer.enhance(0.50)
+    """
     
     return image
 
@@ -116,7 +123,7 @@ def beautify_quote(segments):
             temp['font'] = fontPair[0]
             temp['size'] = 50
         #If nothing else is going to be in a nice font, put small text in a nice font...?
-        elif nothingFancy and len(segment) < 15:
+        elif nothingFancy and len(segment) <= 20:
             temp['font'] = fontPair[0]
             temp['size'] = 50
         #Otherwise
@@ -128,16 +135,10 @@ def beautify_quote(segments):
       
     return organized
 
-def create_image():
+def create_image(quote, path):
     #Pick a new random image and load it
-    unsplash.getImage('data/dril.png')
-    image = Image.open('data/dril.png')
-    
-    #Build the file and get a random quote
-    d = dril.Dril()
-    d.build() 
-    quote = d.quote()[1]
-    #print('"' + quote + '" - @dril')
+    unsplash.getImage(path)
+    image = Image.open(path)
     
     #Resize image to have 800px width and adjust brightness
     p = 800/image.width
@@ -169,12 +170,19 @@ def create_image():
     image.save('data/dril.png', "PNG")
     
 if __name__ == "__main__":
-    logging.basicConfig(filename='data/info.log', level=logging.INFO, format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
-    logging.info('Began running script...')
+    #logging.basicConfig(filename='data/info.log', level=logging.INFO, format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+    #logging.info('Began running script...')
+    
+    #Build the file and get a random quote
+    d = dril.Dril()
+    d.build() 
+    quote = d.quote()[1]
+    #print('"' + quote + '" - @dril')
     
     #Create image
-    create_image()
+    create_image(quote, 'data/dril.png')
     
+    """
     #Authenticate
     auth = tweepy.OAuthHandler(keys.keys['consumer_key'], keys.keys['consumer_secret'])
     auth.set_access_token(keys.keys['access_token'], keys.keys['access_token_secret'])
@@ -186,3 +194,4 @@ if __name__ == "__main__":
         logging.info('Updated successfully')
     except Exception:
         logging.info('Update failed: ' + str(Exception))
+    """

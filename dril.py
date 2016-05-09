@@ -56,7 +56,16 @@ class Dril:
                 write = writer(writeFile, delimiter=',', quoting=QUOTE_NONNUMERIC)
                 
                 #Check to make sure it has just text content
+                #Some @mentions are exluded, others are not...? why
                 bad = len(status.entities['urls']) > 0 or len(status.entities['user_mentions']) > 0 or 'media' in status.entities or 'extended_entities' in status.entities
+                
+                """
+                print('ID: ' + str(status.id))
+                print('Text: ' + status.text)
+                print('Bad: ' + str(bad))
+                print('----------------------------------------')
+                """
+                
                 if not bad:
                     write.writerow([status.id, status.text]) #.encode('ascii', 'ignore') PYTHON 2
                 else:
