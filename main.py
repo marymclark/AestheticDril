@@ -62,7 +62,7 @@ def format_quote(quote):
         #Trying to figure out how to get the returns in the csv? :/
         elif '.' in item or '!' in item or ',' in item or '?' in item or '\n' in item or '\r' in item:
             if len(item) <= 1:
-                segments[len(segments)-1] += ' ' + item
+                newSegment += ' ' + item
             else:
                 newSegment += item
                 segments.append(newSegment)
@@ -199,7 +199,7 @@ if __name__ == "__main__":
     
     #Update
     try:
-        api.update_with_media('data/dril.png')
+        #api.update_with_media('data/dril.png')
         logging.info('Updated successfully')
     except Exception:
         logging.info('Update failed: ' + str(Exception))
