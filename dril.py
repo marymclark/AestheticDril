@@ -50,6 +50,11 @@ class Dril:
         #Rename the new file to be the old file
         os.rename('data/new.csv', 'data/dril.csv')
     
+    def _contains_mention(self, status):
+        for word in status.split():
+            if len(word) > 1 and '@' in word: return True
+        return False
+    
     def _process_status(self, status):
         try:
             with open('data/new.csv', 'at', encoding='utf-8') as writeFile:
@@ -58,6 +63,7 @@ class Dril:
                 #Check to make sure it has just text content
                 #Some @mentions are exluded, others are not...? why
                 bad = len(status.entities['urls']) > 0 or len(status.entities['user_mentions']) > 0 or 'media' in status.entities or 'extended_entities' in status.entities
+                hasMention = self._contains_mention(status.text)
                 
                 """
                 print('ID: ' + str(status.id))
@@ -66,8 +72,8 @@ class Dril:
                 print('----------------------------------------')
                 """
                 
-                if not bad:
-                    write.writerow([status.id, status.text]) #.encode('ascii', 'ignore') PYTHON 2
+                if not bad and not hasMention:
+                    write.writerow([status.id, status.text]) 
                 else:
                     return 0
                     
